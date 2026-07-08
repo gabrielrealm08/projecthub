@@ -165,9 +165,33 @@ DELETE /api/projects/:id
 
 ---
 
-## 📸 Screenshots
+## Deployment
 
-After deployment, add screenshots here.
+This project is deployed on Vercel.
+
+Live Demo:
+https://projecthub-sable-kappa.vercel.app/
+
+## Tech Stack
+
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- Prisma ORM
+- PostgreSQL (Supabase)
+
+## Features
+
+- View all projects
+- Search projects
+- Filter by status
+- Sort projects
+- Add projects
+- Edit projects
+- Delete projects
+- REST API with CRUD operations
+- PostgreSQL database with Prisma
 
 Example:
 
