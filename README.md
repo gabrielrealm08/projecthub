@@ -86,7 +86,7 @@ types/
 Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/projecthub.git
+git clone https://github.com/gabrielrealm08/projecthub
 ```
 
 Install dependencies
