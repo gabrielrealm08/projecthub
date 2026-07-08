@@ -1,36 +1,196 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚀 ProjectHub - Mini SaaS Dashboard
 
-## Getting Started
+A responsive full-stack project management dashboard built with Next.js, TypeScript, Prisma, SQLite, and Tailwind CSS.
 
-First, run the development server:
+---
+
+## 📖 Overview
+
+ProjectHub is a simple SaaS-style dashboard that allows users to manage projects by creating, updating, deleting, searching, filtering, and sorting project information.
+
+This project was built as part of a Full-Stack Developer technical assessment.
+
+---
+
+## ✨ Features
+
+- Dashboard overview cards
+- Create new projects
+- Edit existing projects
+- Delete projects
+- Search projects by name
+- Filter projects by status
+- Sort projects
+  - Newest
+  - Project Name
+  - Deadline
+  - Budget (High → Low)
+  - Budget (Low → High)
+- Responsive design
+- Custom confirmation modal
+- Success notifications
+- Project progress bars
+- Status badges
+- SQLite database using Prisma ORM
+- REST API
+
+---
+
+## 🛠 Tech Stack
+
+### Frontend
+
+- Next.js 15 / App Router
+- React
+- TypeScript
+- Tailwind CSS
+
+### Backend
+
+- Next.js API Routes
+- Prisma ORM
+- SQLite Database
+
+---
+
+## 📂 Folder Structure
+
+```text
+app/
+ ├── api/
+ │    └── projects/
+ ├── page.tsx
+ └── layout.tsx
+
+components/
+ ├── Header.tsx
+ ├── DashboardCards.tsx
+ └── ProjectTable.tsx
+
+lib/
+ └── prisma.ts
+
+prisma/
+ ├── schema.prisma
+ ├── migrations/
+ └── seed.ts
+
+types/
+ └── project.ts
+```
+
+---
+
+## ⚙️ Installation
+
+Clone the repository
+
+```bash
+git clone https://github.com/YOUR_USERNAME/projecthub.git
+```
+
+Install dependencies
+
+```bash
+npm install
+```
+
+Run database migration
+
+```bash
+npm run db:migrate
+```
+
+Seed the database
+
+```bash
+npm run db:seed
+```
+
+Start the development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 📡 API Endpoints
 
-To learn more about Next.js, take a look at the following resources:
+### Get all projects
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+GET /api/projects
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Create project
 
-## Deploy on Vercel
+```
+POST /api/projects
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Update project
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+PUT /api/projects/:id
+```
+
+### Delete project
+
+```
+DELETE /api/projects/:id
+```
+
+---
+
+## 🎯 Main Features
+
+- Responsive Dashboard
+- Project Statistics
+- Search Projects
+- Filter by Status
+- Sort Projects
+- Create Project
+- Edit Project
+- Delete Project
+- Progress Indicators
+- Status Badges
+- Toast Notifications
+
+---
+
+## 📸 Screenshots
+
+After deployment, add screenshots here.
+
+Example:
+
+- Dashboard
+- Add Project Modal
+- Delete Confirmation
+- Search & Filter
+
+---
+
+## 🚀 Future Improvements
+
+- Authentication
+- PostgreSQL deployment
+- Team management
+- Project attachments
+- Charts and analytics
+- Activity logs
+
+---
+
+## 👨‍💻 Author
+
+**Gabriel Oyibo**
+
+Built with Next.js, Prisma, TypeScript and Tailwind CSS.
