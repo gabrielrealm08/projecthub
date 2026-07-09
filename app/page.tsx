@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import DashboardCards from "@/components/DashboardCards";
+import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import ProjectTable from "@/components/ProjectTable";
 import { Project, ProjectStatus } from "@/types/project";
-import Footer from "@/components/Footer";
 
 type ProjectForm = {
   name: string;
@@ -23,17 +23,32 @@ const emptyForm: ProjectForm = {
   budget: "",
 };
 
+function formatProject(project: Project): Project {
+  return {
+    ...project,
+    deadline: project.deadline.slice(0, 10),
+    budget: Number(project.budget),
+  };
+}
+
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
+
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+
   const [form, setForm] = useState<ProjectForm>(emptyForm);
   const [formError, setFormError] = useState("");
+  const [pageError, setPageError] = useState("");
   const [toastMessage, setToastMessage] = useState("");
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchProjects();
@@ -47,16 +62,43 @@ export default function Home() {
     }, 3000);
   }
 
+  async function getErrorMessage(response: Response) {
+    try {
+      const data = await response.json();
+      return data.message || data.error || "Something went wrong.";
+    } catch {
+      return "Something went wrong.";
+    }
+  }
+
   async function fetchProjects() {
-    const response = await fetch("/api/projects");
-    const data = await response.json();
+    try {
+      setIsLoading(true);
+      setPageError("");
 
-    const formattedProjects = data.map((project: any) => ({
-      ...project,
-      deadline: project.deadline.slice(0, 10),
-    }));
+      const response = await fetch(`/api/projects?t=${Date.now()}`, {
+        cache: "no-store",
+      });
 
-    setProjects(formattedProjects);
+      if (!response.ok) {
+        const message = await getErrorMessage(response);
+        setPageError(message);
+        setProjects([]);
+        return;
+      }
+
+      const data = await response.json();
+      const formattedProjects = data.map((project: Project) =>
+        formatProject(project)
+      );
+
+      setProjects(formattedProjects);
+    } catch {
+      setPageError("Unable to load projects. Please try again.");
+      setProjects([]);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   const filteredProjects = useMemo(() => {
@@ -117,40 +159,92 @@ export default function Home() {
       return;
     }
 
-    const url = editingProject
-      ? `/api/projects/${editingProject.id}`
-      : "/api/projects";
+    try {
+      setIsSaving(true);
+      setFormError("");
 
-    const method = editingProject ? "PUT" : "POST";
+      const url = editingProject
+        ? `/api/projects/${editingProject.id}`
+        : "/api/projects";
 
-    await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(form),
-    });
+      const method = editingProject ? "PUT" : "POST";
 
-    setIsProjectModalOpen(false);
-    setFormError("");
-    showToast(
-      editingProject
-        ? "Project updated successfully."
-        : "Project created successfully."
-    );
-    await fetchProjects();
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          status: form.status,
+          deadline: form.deadline,
+          teamMember: form.teamMember.trim(),
+          budget: Number(form.budget),
+        }),
+      });
+
+      if (!response.ok) {
+        const message = await getErrorMessage(response);
+        setFormError(message);
+        return;
+      }
+
+      const savedProject = formatProject(await response.json());
+
+      setProjects((currentProjects) => {
+        if (editingProject) {
+          return currentProjects.map((project) =>
+            project.id === savedProject.id ? savedProject : project
+          );
+        }
+
+        return [savedProject, ...currentProjects];
+      });
+
+      setIsProjectModalOpen(false);
+      setEditingProject(null);
+      setForm(emptyForm);
+      setFormError("");
+
+      showToast(
+        editingProject
+          ? "Project updated successfully."
+          : "Project created successfully."
+      );
+    } catch {
+      setFormError("Unable to save project. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   async function confirmDeleteProject() {
     if (!projectToDelete) return;
 
-    await fetch(`/api/projects/${projectToDelete.id}`, {
-      method: "DELETE",
-    });
+    try {
+      setIsDeleting(true);
 
-    setProjectToDelete(null);
-    showToast("Project deleted successfully.");
-    await fetchProjects();
+      const response = await fetch(`/api/projects/${projectToDelete.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const message = await getErrorMessage(response);
+        setPageError(message);
+        return;
+      }
+
+      setProjects((currentProjects) =>
+        currentProjects.filter((project) => project.id !== projectToDelete.id)
+      );
+
+      setProjectToDelete(null);
+      showToast("Project deleted successfully.");
+    } catch {
+      setPageError("Unable to delete project. Please try again.");
+    } finally {
+      setIsDeleting(false);
+    }
   }
 
   return (
@@ -165,6 +259,12 @@ export default function Home() {
         <Header onAddProject={openAddModal} />
 
         <DashboardCards projects={projects} />
+
+        {pageError && (
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-medium text-red-700">
+            {pageError}
+          </div>
+        )}
 
         <section className="rounded-2xl bg-white p-6 shadow">
           <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -208,20 +308,28 @@ export default function Home() {
             </div>
           </div>
 
-          <ProjectTable
-            projects={filteredProjects}
-            onEdit={openEditModal}
-            onDelete={(id) => {
-              const selectedProject = projects.find(
-                (project) => project.id === id
-              );
+          {isLoading ? (
+            <div className="rounded-2xl border border-slate-200 py-16 text-center text-slate-500">
+              Loading projects...
+            </div>
+          ) : (
+            <ProjectTable
+              projects={filteredProjects}
+              onEdit={openEditModal}
+              onDelete={(id) => {
+                const selectedProject = projects.find(
+                  (project) => project.id === id
+                );
 
-              if (selectedProject) {
-                setProjectToDelete(selectedProject);
-              }
-            }}
-          />
+                if (selectedProject) {
+                  setProjectToDelete(selectedProject);
+                }
+              }}
+            />
+          )}
         </section>
+
+        <Footer />
       </div>
 
       {isProjectModalOpen && (
@@ -299,16 +407,18 @@ export default function Home() {
             <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={() => setIsProjectModalOpen(false)}
-                className="rounded-lg border border-slate-300 px-5 py-2 font-semibold text-slate-700 hover:bg-slate-100"
+                disabled={isSaving}
+                className="rounded-lg border border-slate-300 px-5 py-2 font-semibold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancel
               </button>
 
               <button
                 onClick={saveProject}
-                className="rounded-lg bg-blue-600 px-5 py-2 font-semibold text-white hover:bg-blue-700"
+                disabled={isSaving}
+                className="rounded-lg bg-blue-600 px-5 py-2 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Save
+                {isSaving ? "Saving..." : "Save"}
               </button>
             </div>
           </div>
@@ -333,16 +443,18 @@ export default function Home() {
             <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={() => setProjectToDelete(null)}
-                className="rounded-lg border border-slate-300 px-5 py-2 font-semibold text-slate-700 hover:bg-slate-100"
+                disabled={isDeleting}
+                className="rounded-lg border border-slate-300 px-5 py-2 font-semibold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancel
               </button>
 
               <button
                 onClick={confirmDeleteProject}
-                className="rounded-lg bg-red-600 px-5 py-2 font-semibold text-white hover:bg-red-700"
+                disabled={isDeleting}
+                className="rounded-lg bg-red-600 px-5 py-2 font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Delete
+                {isDeleting ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>
